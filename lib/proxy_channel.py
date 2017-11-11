@@ -5,7 +5,7 @@ from conf.const import RECV_BUF_SIZE, TE_VENDOR
 from socket_utils import *
 import libopenflow_01 as of
 import scl_protocol as scl
-
+import time
 
 ECHO_TIMEOUT = 10
 
@@ -58,6 +58,7 @@ def handle_SET_CONFIG(scl, conn, msg):
     pass
 
 def handle_FLOW_MOD(scl2ctrl, conn, msg):
+    # scl2ctrl.logger.debug("Flow Mod: " + str(msg))
     if scl2ctrl.streams.ofp_connected[conn.conn_id]:
         # put msg and corresponding scl header into downstreams
         scl2ctrl.streams.downstreams[conn.conn_id].put([msg.pack(), scl.SCLT_OF_PROXY])
@@ -76,6 +77,48 @@ def handle_BARRIER_REQUEST(scl, conn, msg):
         data = scl.streams.handshake_queues[conn.conn_id].get()
         scl.streams.upstreams[conn.conn_id].put(data)
 
+#######################################3
+
+## For Floodlight 
+
+def handle_PACKET_OUT(scl,conn,msg):
+    scl.logger.debug("Packet Out: " + str(msg))
+    pass
+
+def handle_VENDOR(scl, conn, msg):
+    # TODO
+    scl.logger.debug('ofp_handshake: vendor_message received')
+
+    reply = of.ofp_vendor_generic(vendor=msg.vendor, data='\x00\x00\x00\x0b\x00\x00\x00\x01')
+    reply.xid = msg.xid
+    reply.vendor = msg.vendor
+    scl.streams.upstreams[conn.conn_id].put(reply.pack())
+
+def handle_STATS_REQUEST(scl, conn, msg):
+    scl.logger.debug('ofp_handshake: stats_request received')
+    if msg.type == of.OFPST_DESC:
+        reply = of.ofp_stats_reply()
+        reply.body = of.ofp_desc_stats(mfr_desc="Nicira, Inc.",
+                                       hw_desc="Open vSwitch",
+                                       sw_desc="2.5.2",
+                                       serial_num="None",
+                                       dp_desc="None")
+        reply.type = of.OFPST_DESC
+        reply.body = reply.body.pack()
+        reply.xid = msg.xid
+        scl.streams.upstreams[conn.conn_id].put(reply.pack())
+    else:
+        scl.logger.debug("GETTING OTHER STATISTICS REQUEST FROM FLOODLIGHT.")
+
+def handle_GET_CONFIG_REQUEST(scl, conn, msg):
+    scl.logger.debug('ofp_handshake: get_config_request received')
+    reply = of.ofp_get_config_reply()
+    # reply.xid = msg.xid
+    reply.miss_send_len = 65535
+    scl.streams.upstreams[conn.conn_id].put(reply.pack())
+
+## END [For Floodlight]
+
 
 # A list, where the index is an OFPT, and the value is a function to
 # call for that type
@@ -83,13 +126,27 @@ def handle_BARRIER_REQUEST(scl, conn, msg):
 handlers = []
 
 # Message handlers
+# handlerMap = {
+#     of.OFPT_HELLO : handle_HELLO,
+#     of.OFPT_ECHO_REQUEST : handle_ECHO_REQUEST,
+#     of.OFPT_ECHO_REPLY : handle_ECHO_REPLY,
+#     of.OFPT_FEATURES_REQUEST : handle_FEATURES_REQUEST,
+#     of.OFPT_SET_CONFIG : handle_SET_CONFIG,
+#     of.OFPT_FLOW_MOD : handle_FLOW_MOD,
+#     of.OFPT_BARRIER_REQUEST : handle_BARRIER_REQUEST,
+# }
+
 handlerMap = {
     of.OFPT_HELLO : handle_HELLO,
     of.OFPT_ECHO_REQUEST : handle_ECHO_REQUEST,
     of.OFPT_ECHO_REPLY : handle_ECHO_REPLY,
+    of.OFPT_VENDOR : handle_VENDOR,
     of.OFPT_FEATURES_REQUEST : handle_FEATURES_REQUEST,
+    of.OFPT_GET_CONFIG_REQUEST: handle_GET_CONFIG_REQUEST,
     of.OFPT_SET_CONFIG : handle_SET_CONFIG,
+    of.OFPT_PACKET_OUT : handle_PACKET_OUT,
     of.OFPT_FLOW_MOD : handle_FLOW_MOD,
+    of.OFPT_STATS_REQUEST : handle_STATS_REQUEST,
     of.OFPT_BARRIER_REQUEST : handle_BARRIER_REQUEST,
 }
 
@@ -661,7 +718,18 @@ class Scl2SclUdp(Scl2Scl):
         self.udp_flood = UdpFloodListener('', scl_proxy_port, scl_agent_port)
 
     def send_raw(self, msg, sclt, dst_addr):
-        self.udp_flood.send(scl.scl_udp_pack(msg, sclt, self.addr, dst_addr))
+        # EXCEPTION PROBLEM HERE.
+        TIME_SLEEP = 1
+        
+        while True:
+            try:
+                self.udp_flood.send(scl.scl_udp_pack(msg, sclt, self.addr, dst_addr))
+                break
+            except Exception as E:
+                self.logger.info("SAIM: ... Exception ...")
+                time.sleep(TIME_SLEEP)
+                TIME_SLEEP = TIME_SLEEP * 2
+                continue
 
     def wait(self, selector):
         if not self.streams.downstreams_empty():

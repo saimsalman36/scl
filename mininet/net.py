@@ -9,8 +9,8 @@ from mininet.node import Controller, RemoteController
 from mininet.log import setLogLevel
 
 DIR = 'bash scripts'
-#LOG_LEVEL = 'info'
-LOG_LEVEL = 'debug'
+LOG_LEVEL = 'info'
+# LOG_LEVEL = 'debug'
 CONF_FILE = '../conf/net.cfg'
 
 class SclNet(object):
@@ -19,7 +19,7 @@ class SclNet(object):
         self.hosts = []
         self.topo = topo
         # NOTE: hard code now, use config file instead
-        self.ctrls = [3, 7, 8, 15]
+        self.ctrls = [1,2]
         setLogLevel(LOG_LEVEL)
         # set up topology skeleton
         if self.topo == 'fattree_inband':
@@ -107,7 +107,9 @@ class SclNet(object):
             # NOTE: hard code
             #host.cmd('python pox/pox.py log.level --DEBUG log --file=log/ctrl_%d.log,w --format=%s --datefmt=%s scl_routing --name=%s &' % (ctrl_id, pox_format, pox_datefmt, self.file_name))
             if app == 'shortest':
-                host.cmd('cd .. && python pox/pox.py log.level --DEBUG log --format=%s --datefmt=%s scl_routing --name=%s > log/ctrl_%d.log 2>&1 &' % (pox_format, pox_datefmt, self.file_name, ctrl_id))
+                # host.cmdPrint('tshark -i any -s 7000 -w FirstResult_' + str(ctrl_id) + '.pcap -a duration:45 &')
+            	host.cmdPrint('cd ../floodlight && java -jar target/floodlight.jar ' + '> /home/saimsalman/Desktop/scl/log/ctrl_' + str(ctrl_id) + '.log &')
+                # host.cmd('cd .. && python pox/pox.py log.level --DEBUG log --format=%s --datefmt=%s scl_routing --name=%s > log/ctrl_%d.log 2>&1 &' % (pox_format, pox_datefmt, self.file_name, ctrl_id))
             elif app == 'te':
                 host.cmd('cd .. && python pox/pox.py log.level --DEBUG log --format=%s --datefmt=%s scl_te --name=%s > log/ctrl_%d.log 2>&1 &' % (pox_format, pox_datefmt, self.file_name, ctrl_id))
             ctrl_id = ctrl_id + 1

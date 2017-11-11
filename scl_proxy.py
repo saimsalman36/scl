@@ -55,7 +55,16 @@ while True:
     timer.wait(selector)
     scl2ctrl.wait(selector)
     scl2scl.wait(selector)
+
     lists = selector.block()
     timer.run(lists)
-    scl2ctrl.run(lists)
-    scl2scl.run(lists)
+
+    try:
+        scl2ctrl.run(lists)
+    except Exception as E:
+        pass
+
+    try:    
+        scl2scl.run(lists)
+    except Exception as E:
+        pass
