@@ -241,6 +241,7 @@ class NetworkX {
     }
 
     public List<String> Path(String node1, String node2) {
+        if (this.next.get(node1) == null) return null;
         if (this.next.get(node1).get(node2) == "") return null;
 
         List<String> ret = new ArrayList<String>();
@@ -248,6 +249,7 @@ class NetworkX {
 
         while (!node1.equals(node2)) {
             node1 = this.next.get(node1).get(node2);
+            if (node1 == null) return null;
             ret.add(node1);
         }
 
