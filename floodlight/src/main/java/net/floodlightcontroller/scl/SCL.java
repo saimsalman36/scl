@@ -81,9 +81,13 @@ class Triples {
 
 class NetworkX {
     Map<String, List<String>> graph;
+    Map<String, Map<String, Integer>> dist;
+    Map<String, Map<String, String>> next;
 
     public NetworkX() {
         graph = new HashMap<String, List<String>>();
+        dist = new HashMap<String, Map<String, Integer>>();
+        next = new HashMap<String, Map<String, String>>();
     }
 
     public String printGraph() {
@@ -102,6 +106,12 @@ class NetworkX {
             }
         }
 
+        return ret;
+    }
+
+    public List<String> listNodes() {
+        List<String> ret = new ArrayList<String>(graph.keySet());
+        ret.sort(String::compareToIgnoreCase);
         return ret;
     }
 
@@ -173,6 +183,76 @@ class NetworkX {
 
         return false;
     }
+
+    public void initializeParameters() {
+        List<String> otherHosts = this.listNodes();
+        otherHosts.forEach(i -> {
+            otherHosts.forEach(j -> {
+                if (this.dist.get(i) == null) {
+                    Map<String, Integer> temp = new HashMap<String, Integer>();
+                    temp.put(j, 9999);
+                    this.dist.put(i, temp);
+
+                    Map<String, String> tempNext = new HashMap<String, String>();
+                    tempNext.put(j, "");
+                    this.next.put(i, tempNext);
+                } else {
+                    this.dist.get(i).put(j, 9999);
+                    this.next.get(i).put(j, "");
+                }
+            });
+        });
+
+        otherHosts.forEach(i -> {
+            this.graph.get(i).forEach(j -> {
+                this.dist.get(i).put(j, 1);
+                this.next.get(i).put(j, j);
+            });
+        });
+    }
+
+    public void FloydWarshallWithPathReconstruction() {
+        initializeParameters();
+
+        List<String> otherHosts = listNodes();
+
+        Integer random = 0;
+
+        for (String k: otherHosts) {
+            for (String i: otherHosts) {
+                for (String j: otherHosts) {
+                    if (this.dist.get(i).get(j) == (this.dist.get(i).get(k) + this.dist.get(k).get(j))) {
+                        if (random == 0) {
+                            this.dist.get(i).put(j, this.dist.get(i).get(k) + this.dist.get(k).get(j));
+                            this.next.get(i).put(j, this.next.get(i).get(k));
+                            random = 1;
+                        } else {
+                            random = 0;
+                        }
+                    }
+
+                    if (this.dist.get(i).get(j) > (this.dist.get(i).get(k) + this.dist.get(k).get(j))) {
+                        this.dist.get(i).put(j, this.dist.get(i).get(k) + this.dist.get(k).get(j));
+                        this.next.get(i).put(j, this.next.get(i).get(k));
+                    }
+                }
+            }
+        }
+    }
+
+    public List<String> Path(String node1, String node2) {
+        if (this.next.get(node1).get(node2) == "") return null;
+
+        List<String> ret = new ArrayList<String>();
+        ret.add(node1);
+
+        while (!node1.equals(node2)) {
+            node1 = this.next.get(node1).get(node2);
+            ret.add(node1);
+        }
+
+        return ret;
+    }   
 
     public List<List<String>> printAllPaths(String node1, String node2) {
         Map<String, Boolean> visited = new HashMap<String, Boolean>();
