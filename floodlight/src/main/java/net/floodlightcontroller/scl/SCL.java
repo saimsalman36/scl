@@ -866,6 +866,8 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
             tempMapDelete.put(sw,new ArrayList<Triples>());
         }
 
+        this.networkGraph.FloydWarshallWithPathReconstruction();
+
         Map<String, Map<String, List<Triples>>> updates = new HashMap<String, Map<String, List<Triples>>>();
         updates.put("modify", tempMapDelete);
         updates.put("delete", tempMapModify);
@@ -873,12 +875,15 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
         for (String host1 : this.hosts.keySet()) {
             for (String host2 : this.hosts.keySet()) {
                 if (host1.equals(host2)) continue;
-                List<List<String>> paths = this.networkGraph.printAllPaths(host1, host2);
-                if (paths.size() == 0) continue;
+                // List<List<String>> paths = this.networkGraph.printAllPaths(host1, host2);
+                // if (paths.size() == 0) continue;
 
-                List<String> path = paths.get(current % paths.size());
+                // List<String> path = paths.get(current % paths.size());
                 // logger.info("Shortest Path: " + path.toString());
-                current += 1;
+                // current += 1;
+
+                List<String> path = this.networkGraph.Path(host1, host2);
+                if (path == null) continue;
 
                 for (int i = 1; i < path.size() - 1; i++) {
                     String a = path.get(i);
