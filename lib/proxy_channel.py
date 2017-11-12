@@ -52,6 +52,7 @@ def handle_FEATURES_REQUEST(scl, conn, msg):
     reply = of.ofp_features_reply()
     reply.xid = msg.xid
     reply.datapath_id = scl.streams.agent_list.index(id2str(conn.conn_id))
+    scl.logger.info(str(reply))
     scl.streams.upstreams[conn.conn_id].put(reply.pack())
 
 def handle_SET_CONFIG(scl, conn, msg):
