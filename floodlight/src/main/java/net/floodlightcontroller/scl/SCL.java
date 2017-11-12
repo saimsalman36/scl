@@ -115,27 +115,27 @@ class NetworkX {
         return ret;
     }
 
-    public void addNode(String name) {
+    public boolean addNode(String name) {
         if (hasNode(name) == false) {
             List<String> temp = new ArrayList<String>();
             this.graph.put(name, temp);
-        } else {
-            System.out.println("NOT POSSIBLE!");
-            // Throw Exception.
+            return true;
         }
+
+        return false;
     }
 
-    public void removeNode(String name) {
+    public boolean removeNode(String name) {
         if (hasNode(name) == true) {
             List<String> copy = new ArrayList<String>(this.graph.get(name));
             for (int i = 0; i < copy.size(); i++) {
                 removeEdge(name, copy.get(i));
             }   
             this.graph.remove(name);
-        } else {
-            System.out.println("NOT POSSIBLE!");
-            // Throw Exception.
+            return true;
         }
+
+        return false;
     }
 
     public boolean hasEdge(String node1, String node2) {
@@ -146,28 +146,28 @@ class NetworkX {
         return this.graph.get(node1).contains(node2) && this.graph.get(node2).contains(node1);
     }
 
-    public void addEdge(String node1, String node2) {
+    public boolean addEdge(String node1, String node2) {
         if (hasNode(node1) == false || hasNode(node2) == false) {
-            // Throw Exception
-            System.out.println("NOT POSSIBLE");
+            return false;
         }
 
         if (hasEdge(node1, node2) != true) {
             this.graph.get(node1).add(node2);
             this.graph.get(node2).add(node1);
-        } else {
-            // System.out.println("Edge already present");
+            return true;
         }
+
+        return false;
     }
 
-    public void removeEdge(String node1, String node2) {
+    public boolean removeEdge(String node1, String node2) {
         if (hasEdge(node1, node2) == true) {
             this.graph.get(node1).remove(node2);
             this.graph.get(node2).remove(node1);
-        } else {
-            // Throw Exception!
-            System.out.println("NOT POSSIBLE!");
+            return true;
         }
+
+        return false;
     }
 
     public boolean hasNode(String name) {
@@ -630,9 +630,6 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
         logger.info("Switch Changed: " + switchID_to_string(switchId));
     }
 
-    // @Override
-    // switchPortChanged(DatapathId switchId,OFPortDesc,PortChangeType,FloodlightContext)
-
     @Override
     public void switchPortChanged(DatapathId switchId,
                                   OFPortDesc port,
@@ -640,6 +637,7 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
 
         String swID = switchID_to_string(switchId);
         Link lnk = intf2link.get(swID + ':' + port.getName());
+        boolean topoUpdated = false;
 
         if (lnk == null) return;
 
@@ -657,8 +655,7 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
                 if (lnk.state2 == 1) {
                     return;
                 } else {
-                    networkGraph.addEdge(sw1, sw2);
-                    updateFlowEntries(calShortestRoute());
+                    topoUpdated = networkGraph.addEdge(sw1, sw2);
                 }
             } else if (sw2.equals(swID)) {
                 lnk.state2 = 512;
@@ -666,8 +663,7 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
                 if (lnk.state1 == 1) {
                     return;
                 } else {
-                    networkGraph.addEdge(sw1, sw2);
-                    updateFlowEntries(calShortestRoute());
+                    topoUpdated = networkGraph.addEdge(sw1, sw2);
                 }
             }
         }
@@ -681,8 +677,7 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
                 if (lnk.state2 == 1) {
                     return;
                 } else {
-                    networkGraph.removeEdge(sw1, sw2);
-                    updateFlowEntries(calShortestRoute());
+                    topoUpdated = networkGraph.removeEdge(sw1, sw2);
                 }
             } else if (sw2.equals(swID)) {
                 lnk.state2 = 1;
@@ -690,17 +685,18 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
                 if (lnk.state1 == 1) {
                     return;
                 } else {
-                    networkGraph.removeEdge(sw1, sw2);
-                    updateFlowEntries(calShortestRoute());
+                    topoUpdated = networkGraph.removeEdge(sw1, sw2);
                 }
             }
         }
 
+        if (topoUpdated == true) updateFlowEntries(calShortestRoute());
         logger.info("Event Count: " + EventCount.toString());
     }
 
     @Override
     public void switchActivated(DatapathId switchId) {
+        logger.info("Switch Activated" + switchId.toString());
     }
 
     void updateFlowEntry(String switchName, String host1, String host2, Link lnk, String cmd) {
@@ -739,7 +735,7 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
         
         //TODO: Solve this hack!
         if (cmd.equals("modify")) {
-            logger.info("Modify: Switch: " + switchName + " , Host-1: " + host1 + ", Host-2: " + host2 + ", Outport: " + lnk.port1 + ", Outport: " + lnk.port2 + ",Entered: " + outPort.toString());
+            // logger.info("Modify: Switch: " + switchName + " , Host-1: " + host1 + ", Host-2: " + host2 + ", Outport: " + lnk.port1 + ", Outport: " + lnk.port2 + ",Entered: " + outPort.toString());
 
             OFFlowModify flowModify = myFactory.buildFlowModify()
                     .setBufferId(OFBufferId.NO_BUFFER)
@@ -753,7 +749,7 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
 
             sw.write(flowModify);
         } else if (cmd.equals("delete")) {
-            logger.info("Delete: Switch: " + switchName + " , Host-1: " + host1 + ", Host-2: " + host2 + ", Outport: " + lnk.port1 + ", Outport: " + lnk.port2 + ",Entered: " + outPort.toString());
+            // logger.info("Delete: Switch: " + switchName + " , Host-1: " + host1 + ", Host-2: " + host2 + ", Outport: " + lnk.port1 + ", Outport: " + lnk.port2 + ",Entered: " + outPort.toString());
 
             OFFlowDelete flowDelete = myFactory.buildFlowDelete()
                     .setBufferId(OFBufferId.NO_BUFFER)
@@ -827,7 +823,7 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
         }
 
         Iterator it = updates.get("modify").entrySet().iterator();
-        logger.info("Flows Modified: " + updates.get("modify").entrySet().size());
+        // logger.info("Flows Modified: " + updates.get("modify").entrySet().size());
         EventCount.set(4, EventCount.get(4) + updates.get("modify").entrySet().size());
         
         while (it.hasNext()) {
@@ -841,7 +837,7 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
         }
 
         it = updates.get("delete").entrySet().iterator();
-        logger.info("Flows Deleted: " + updates.get("delete").entrySet().size());
+        // logger.info("Flows Deleted: " + updates.get("delete").entrySet().size());
         EventCount.set(5, EventCount.get(5) + updates.get("delete").entrySet().size());
 
         while (it.hasNext()) {
@@ -853,7 +849,7 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
             }
         }
 
-        logger.info("Event Count: " + EventCount.toString());
+        // logger.info("Event Count: " + EventCount.toString());
     }
 
     public Map<String, Map<String, List<Triples>>> calShortestRoute() {
@@ -890,6 +886,8 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
                     String b = path.get(i + 1);
 
                     Triples tempTriple = new Triples(host1, host2, this.sw2link.get(a).get(b));
+
+                    // logger.info("TempTriple: " + tempTriple.toString());
 
                     if (this.sw_tables.get(a).get(host1).get(host2) != this.sw2link.get(a).get(b)) {
                         this.sw_tables.get(a).get(host1).put(host2,this.sw2link.get(a).get(b));
@@ -939,7 +937,7 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
         }
         updateFlowEntries(calShortestRoute());
 
-        logger.info("Event Count: " + EventCount.toString());
+        // logger.info("Event Count: " + EventCount.toString());
     }
 
     @Override
@@ -968,9 +966,10 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
         // logger.info("Switch Added -- Now using the ports to update flow entries.");
 
         Collection<OFPort> portCollection = sw.getEnabledPortNumbers();
+        boolean topoUpdates = false;
 
         for (OFPort port : portCollection) {
-            // logger.info("PORT -- PORT: " + port.toString());
+            // logger.info("Switch Port-ADD");
             linkService.AddToSuppressLLDPs(switchId, port);
 
             String swID = switchID_to_string(switchId);
@@ -995,23 +994,16 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
 
             if (sw1.equals(swID)) {
                 lnk.state1 = 512;
-
-                if (lnk.state2 == 512) {
-                    this.networkGraph.addEdge(sw1, sw2);
-                } else {
-                    logger.info("WAIT FOR OTHER PORT.");
-                }
+                if (lnk.state2 == 512) this.networkGraph.addEdge(sw1, sw2);
+                topoUpdates = true;
             } else if (sw2.equals(swID)) {
                 lnk.state2 = 512;
-
-                if (lnk.state1 == 512) {
-                    this.networkGraph.addEdge(sw1, sw2);
-                } else {
-                    logger.info("WAIT FOR OTHER PORT.");
-                }
+                if (lnk.state1 == 512) this.networkGraph.addEdge(sw1, sw2);
+                topoUpdates = true;
             }
         }
-        updateFlowEntries(calShortestRoute());
+
+        if (topoUpdates == true) updateFlowEntries(calShortestRoute());
         logger.info("Event Count: " + EventCount.toString());
     }
 
