@@ -19,8 +19,8 @@ import net.floodlightcontroller.core.module.IFloodlightService;
 import net.floodlightcontroller.core.PortChangeType;
 import net.floodlightcontroller.core.internal.IOFSwitchService;
 
-import net.floodlightcontroller.linkdiscovery.ILinkDiscoveryListener;
-import net.floodlightcontroller.linkdiscovery.ILinkDiscoveryService;
+// import net.floodlightcontroller.linkdiscovery.ILinkDiscoveryListener;
+// import net.floodlightcontroller.linkdiscovery.ILinkDiscoveryService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -397,11 +397,12 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
     protected static NetworkX networkGraph;
     protected static Map<String, IOFSwitch> swToConn;
 
-    protected ILinkDiscoveryService linkService;
+    // protected ILinkDiscoveryService linkService;
     protected IOFSwitchService switchService;
     protected static Logger logger;
 
     protected static List<Integer> EventCount;
+    protected static Integer counterPortEvents;
 
     public void loadTopology(String jsonData) throws IOException{
         JsonParser jsonParser = new JsonFactory().createParser(jsonData);
@@ -545,7 +546,7 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
     public Collection<Class<? extends IFloodlightService>> getModuleDependencies() {
         Collection<Class<? extends IFloodlightService>> l =
             new ArrayList<Class<? extends IFloodlightService>>();
-        l.add(ILinkDiscoveryService.class);
+        // l.add(ILinkDiscoveryService.class);
         l.add(IOFSwitchService.class);
         return l;
     }
@@ -555,7 +556,7 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
             throws FloodlightModuleException {
 
         switchService = context.getServiceImpl(IOFSwitchService.class);
-        linkService = context.getServiceImpl(ILinkDiscoveryService.class);
+        // linkService = context.getServiceImpl(ILinkDiscoveryService.class);
         logger = LoggerFactory.getLogger(SCL.class);
         
         switches = new HashMap<String, IPv4Address>();
@@ -569,6 +570,7 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
         sw_tables = new HashMap<String, Map<String, Map<String, Link>>>();
         sw_tables_status = new HashMap<String, Map<String, Map<String, String>>>();
         EventCount = new ArrayList<Integer>(6);
+        counterPortEvents = 0;
 
         for (int i = 0; i < 6; i++) EventCount.add(0);
 
@@ -642,6 +644,10 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
         if (lnk == null) return;
 
         logger.info("Port-" + type.toString() + ": " + swID + ':' + port.getName());
+        counterPortEvents += 1; 
+
+        if (counterPortEvents == 269) updateFlowEntries(calShortestRoute());
+        if (counterPortEvents != 269) System.out.println("counterPortEvents Value: " + counterPortEvents.toString());
 
         String sw1 = lnk.sw1;
         String sw2 = lnk.sw2;
@@ -690,13 +696,13 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
             }
         }
 
-        if (topoUpdated == true) updateFlowEntries(calShortestRoute());
+        // if (topoUpdated == true) updateFlowEntries(calShortestRoute());
         logger.info("Event Count: " + EventCount.toString());
     }
 
     @Override
     public void switchActivated(DatapathId switchId) {
-        logger.info("Switch Activated" + switchId.toString());
+        // logger.info("Switch Activated" + switchId.toString());
     }
 
     void updateFlowEntry(String switchName, String host1, String host2, Link lnk, String cmd) {
@@ -762,7 +768,13 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
                     .build();
                  
             sw.write(flowDelete);
-        }     
+        }
+
+        // try {
+        // 	Thread.sleep(1000);
+        // } catch (InterruptedException e) {
+        	
+        // }
     }
 
     void updateFlowEntryOF14(String switchName, String host1, String host2, Link lnk, String cmd) {
@@ -970,7 +982,7 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
 
         for (OFPort port : portCollection) {
             // logger.info("Switch Port-ADD");
-            linkService.AddToSuppressLLDPs(switchId, port);
+            // linkService.AddToSuppressLLDPs(switchId, port);
 
             String swID = switchID_to_string(switchId);
             String interfaceName = swToConn.get(swID).getPort(port).getName();
@@ -1003,7 +1015,7 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
             }
         }
 
-        if (topoUpdates == true) updateFlowEntries(calShortestRoute());
+        // if (topoUpdates == true) updateFlowEntries(calShortestRoute());
         logger.info("Event Count: " + EventCount.toString());
     }
 

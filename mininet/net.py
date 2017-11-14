@@ -19,7 +19,7 @@ class SclNet(object):
         self.hosts = []
         self.topo = topo
         # NOTE: hard code now, use config file instead
-        self.ctrls = [1,2]
+        self.ctrls = [1,13]
         setLogLevel(LOG_LEVEL)
         # set up topology skeleton
         if self.topo == 'fattree_inband':
@@ -158,7 +158,7 @@ class SclNet(object):
             sw = self.net.getNodeByName(sw_name)
             # sw.ports index starts from 0, ovs index starts from 1
             sw_port = sw.ports[sw_intf] + 1
-            port_list = [1,2,3,4]
+            port_list = [1,2,3,4,5,6,7,8,9]
             port_list.remove(sw_port)
             self.net.getNodeByName(sw_name).cmdPrint(
                     '%s/config_ctrl_vlan.sh %s %s %d %d %d %d' % (

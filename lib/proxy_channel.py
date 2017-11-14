@@ -7,7 +7,8 @@ import libopenflow_01 as of
 import scl_protocol as scl
 import time
 
-ECHO_TIMEOUT = 10
+# SAIM SALMAN: TIMEOUT CHANGE FROM 10 TO 60.
+ECHO_TIMEOUT = 60
 
 # some functions from pox controller
 # pox/pox/openflow/util.py
