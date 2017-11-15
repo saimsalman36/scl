@@ -19,13 +19,13 @@ class SclNet(object):
         self.hosts = []
         self.topo = topo
         # NOTE: hard code now, use config file instead
-        self.ctrls = [1,2]
+        self.ctrls = [1,13]
         setLogLevel(LOG_LEVEL)
         # set up topology skeleton
         if self.topo == 'fattree_inband':
-            self.skeleton = FatTree(6, self.switches, self.hosts)
+            self.skeleton = FatTree(8, self.switches, self.hosts)
         elif self.topo == 'fattree_outband':
-            self.skeleton = FatTreeOutBand(6, self.switches, self.hosts, self.ctrls)
+            self.skeleton = FatTreeOutBand(8, self.switches, self.hosts, self.ctrls)
         # autoStaticArp doesnt works well, because we will move the IP in
         # the host interface to the internal port of the switch
         self.net = Mininet(topo=self.skeleton, controller=None, link=TCLink)
@@ -158,7 +158,7 @@ class SclNet(object):
             sw = self.net.getNodeByName(sw_name)
             # sw.ports index starts from 0, ovs index starts from 1
             sw_port = sw.ports[sw_intf] + 1
-            port_list = [1,2,3,4]
+            port_list = [1,2,3,4,5,6,7,8,9]
             port_list.remove(sw_port)
             self.net.getNodeByName(sw_name).cmdPrint(
                     '%s/config_ctrl_vlan.sh %s %s %d %d %d %d' % (
