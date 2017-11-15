@@ -402,7 +402,6 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
     protected static Logger logger;
 
     protected static List<Integer> EventCount;
-    protected static Integer counterPortEvents;
 
     public void loadTopology(String jsonData) throws IOException{
         JsonParser jsonParser = new JsonFactory().createParser(jsonData);
@@ -570,7 +569,6 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
         sw_tables = new HashMap<String, Map<String, Map<String, Link>>>();
         sw_tables_status = new HashMap<String, Map<String, Map<String, String>>>();
         EventCount = new ArrayList<Integer>(6);
-        counterPortEvents = 0;
 
         for (int i = 0; i < 6; i++) EventCount.add(0);
 
@@ -644,10 +642,6 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
         if (lnk == null) return;
 
         logger.info("Port-" + type.toString() + ": " + swID + ':' + port.getName());
-        counterPortEvents += 1; 
-
-        if (counterPortEvents == 269) updateFlowEntries(calShortestRoute());
-        if (counterPortEvents != 269) System.out.println("counterPortEvents Value: " + counterPortEvents.toString());
 
         String sw1 = lnk.sw1;
         String sw2 = lnk.sw2;
@@ -697,6 +691,7 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
         }
 
         // if (topoUpdated == true) updateFlowEntries(calShortestRoute());
+        // if (EventCount.get(2) >= 268) updateFlowEntries(calShortestRoute());
         logger.info("Event Count: " + EventCount.toString());
     }
 
@@ -981,6 +976,7 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
         boolean topoUpdates = false;
 
         for (OFPort port : portCollection) {
+            EventCount.set(2, EventCount.get(2) + 1);
             // logger.info("Switch Port-ADD");
             // linkService.AddToSuppressLLDPs(switchId, port);
 
@@ -1014,8 +1010,6 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
                 topoUpdates = true;
             }
         }
-
-        // if (topoUpdates == true) updateFlowEntries(calShortestRoute());
         logger.info("Event Count: " + EventCount.toString());
     }
 
@@ -1027,5 +1021,19 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
 
 
         switchService.addOFSwitchListener(this); 
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    logger.info("GOING TO SLEEP");
+                    Thread.sleep(80000);
+                    logger.info("ADDING FLOWS == ADDING FLOWS");
+                    updateFlowEntries(calShortestRoute());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 }

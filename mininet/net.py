@@ -23,9 +23,9 @@ class SclNet(object):
         setLogLevel(LOG_LEVEL)
         # set up topology skeleton
         if self.topo == 'fattree_inband':
-            self.skeleton = FatTree(6, self.switches, self.hosts)
+            self.skeleton = FatTree(8, self.switches, self.hosts)
         elif self.topo == 'fattree_outband':
-            self.skeleton = FatTreeOutBand(6, self.switches, self.hosts, self.ctrls)
+            self.skeleton = FatTreeOutBand(8, self.switches, self.hosts, self.ctrls)
         # autoStaticArp doesnt works well, because we will move the IP in
         # the host interface to the internal port of the switch
         self.net = Mininet(topo=self.skeleton, controller=None, link=TCLink)
