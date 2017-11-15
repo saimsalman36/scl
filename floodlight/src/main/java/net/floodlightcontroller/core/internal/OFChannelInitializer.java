@@ -140,7 +140,9 @@ public class OFChannelInitializer extends ChannelInitializer<Channel> {
 				new IdleStateHandler(PipelineIdleReadTimeout.MAIN,
 						PipelineIdleWriteTimeout.MAIN,
 						0));
-		pipeline.addLast(PipelineHandler.READ_TIMEOUT, new ReadTimeoutHandler(30));
+
+		// SAIM SALMAN: CHANGED THE READTIMEOUTHANDLER TIMEOUT.
+		pipeline.addLast(PipelineHandler.READ_TIMEOUT, new ReadTimeoutHandler(30 * 10));
 		pipeline.addLast(PipelineHandler.CHANNEL_HANDSHAKE_TIMEOUT,
 				new HandshakeTimeoutHandler(
 						handler,
@@ -161,20 +163,24 @@ public class OFChannelInitializer extends ChannelInitializer<Channel> {
 		public final static String READ_TIMEOUT = "readtimeout";
 		public final static String SSL_TLS_ENCODER_DECODER = "ofsecurechannelencoderdecoder";    }
 
+
+	// SAIM SALMAN: CHANGING THE TIMEOUTS!
+
+
 	/**
 	 * Timeouts for parts of the handshake, in seconds
 	 */
 	 public static class PipelineHandshakeTimeout {
-		 final static int CHANNEL = 10;
-		 public final static int SWITCH = 30;
+		 final static int CHANNEL = 10 * 10;
+		 public final static int SWITCH = 30 * 10;
 	 }
 
 	 /**
 	  * Timeouts for writes on connections, in seconds
 	  */
 	 public static class PipelineIdleWriteTimeout {
-		 final static int MAIN = 2;
-		 public final static int AUX = 15;
+		 final static int MAIN = 2 * 10;
+		 public final static int AUX = 15 * 10;
 	 }
 
 	 /**
