@@ -690,14 +690,13 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
             }
         }
 
-        // if (topoUpdated == true) updateFlowEntries(calShortestRoute());
-        // if (EventCount.get(2) >= 268) updateFlowEntries(calShortestRoute());
+        if (topoUpdated == true) updateFlowEntries(calShortestRoute());
         logger.info("Event Count: " + EventCount.toString());
     }
 
     @Override
     public void switchActivated(DatapathId switchId) {
-        // logger.info("Switch Activated" + switchId.toString());
+        logger.info("Switch Activated" + switchId.toString());
     }
 
     void updateFlowEntry(String switchName, String host1, String host2, Link lnk, String cmd) {
@@ -1010,6 +1009,8 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
                 topoUpdates = true;
             }
         }
+
+        if (topoUpdates == true) updateFlowEntries(calShortestRoute());
         logger.info("Event Count: " + EventCount.toString());
     }
 
