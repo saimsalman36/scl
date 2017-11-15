@@ -245,25 +245,32 @@ class OFChannelHandler extends SimpleChannelInboundHandler<Iterable<OFMessage>> 
 			if (!state.channelHandshakeComplete) {
 				switch(m.getType()) {
 				case HELLO:
+					log.info("Message Type: HELLO");
 					processOFHello((OFHello)m);
 					break;
 				case ERROR:
+					log.info("Message Type: ERROR");
 					processOFError((OFErrorMsg)m);
 					break;
 				case FEATURES_REPLY:
+					log.info("Message Type: FEATURES_REPLY");
 					processOFFeaturesReply((OFFeaturesReply)m);
 					break;
 				case EXPERIMENTER:
+					log.info("Message Type: EXPERIMENTER");
 					processOFExperimenter((OFExperimenter)m);
 					break;
 					/* echos can be sent at any time */
 				case ECHO_REPLY:
+					// log.info("Message Type: ECHO_REPLY");
 					processOFEchoReply((OFEchoReply)m);
 					break;
 				case ECHO_REQUEST:
+					// log.info("Message Type: ECHO_REQUEST");
 					processOFEchoRequest((OFEchoRequest)m);
 					break;
 				case PORT_STATUS:
+					log.info("Message Type: PORT_STATUS");
 					processOFPortStatus((OFPortStatus)m);
 					break;
 				default:
@@ -274,9 +281,11 @@ class OFChannelHandler extends SimpleChannelInboundHandler<Iterable<OFMessage>> 
 			else{
 				switch(m.getType()){
 				case ECHO_REPLY:
+					// log.info("Message Type: ECHO_REPLY");
 					processOFEchoReply((OFEchoReply)m);
 					break;
 				case ECHO_REQUEST:
+					// log.info("Message Type: ECHO_REQUEST");
 					processOFEchoRequest((OFEchoRequest)m);
 					break;
 					// Send to SwitchManager and thus higher orders of control
@@ -606,12 +615,14 @@ class OFChannelHandler extends SimpleChannelInboundHandler<Iterable<OFMessage>> 
 		if (cause instanceof ReadTimeoutException) {
 
 			if (featuresReply.getVersion().compareTo(OFVersion.OF_13) < 0) {
-				log.error("Disconnecting switch {} due to read timeout on main cxn.",
+				log.info("OpenFlow Version [featuresReply]: " + featuresReply.getVersion().toString());
+				log.error("1. Disconnecting switch {} due to read timeout on main cxn.",
 						getConnectionInfoString());
+				log.info(cause.toString());
 				ctx.channel().close();
 			} else {
 				if (featuresReply.getAuxiliaryId().equals(OFAuxId.MAIN)) {
-					log.error("Disconnecting switch {} due to read timeout on main cxn.",
+					log.error("2. Disconnecting switch {} due to read timeout on main cxn.",
 							getConnectionInfoString());
 					ctx.channel().close();
 				} else {
@@ -699,6 +710,7 @@ class OFChannelHandler extends SimpleChannelInboundHandler<Iterable<OFMessage>> 
 				// We are the last handler in the stream, so run the
 				// exception through the channel again by passing in
 				// ctx.getChannel().
+				log.info("SAIM: Exception Thrown");
 				ctx.fireExceptionCaught(ex);
 			}
 		}
