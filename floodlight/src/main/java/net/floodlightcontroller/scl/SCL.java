@@ -217,19 +217,23 @@ class NetworkX {
         initializeParameters();
 
         List<String> otherHosts = listNodes();
-
-        Integer random = 0;
+        // System.out.println("Hosts Order: " + otherHosts);
+        Integer counter = 1;
 
         for (String k: otherHosts) {
             for (String i: otherHosts) {
                 for (String j: otherHosts) {
+                    if (i.equals(j) || i.equals(k) || j.equals(k)) {
+                        continue;
+                    }
+
                     if (this.dist.get(i).get(j) == (this.dist.get(i).get(k) + this.dist.get(k).get(j))) {
-                        if (random == 0) {
+                        if (counter == 1) {
                             this.dist.get(i).put(j, this.dist.get(i).get(k) + this.dist.get(k).get(j));
                             this.next.get(i).put(j, this.next.get(i).get(k));
-                            random = 1;
+                            counter = 0;
                         } else {
-                            random = 0;
+                            counter = counter + 1;
                         }
                     }
 
@@ -614,6 +618,7 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
 
     public String switchID_to_string(DatapathId switchId) {
         String hexNumber = switchId.toString().replace(":", "");
+        if (hexNumber.equals("0111111111111111")) return "s000"; // For Floodlight.
         Integer temp = Integer.parseInt(hexNumber, 16);
 
         if (temp < 10) return "s00" + Integer.toString(temp);
@@ -832,7 +837,6 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
 
         Iterator it = updates.get("modify").entrySet().iterator();
         logger.info("Flows Modified: " + updates.get("modify").entrySet().size());
-        EventCount.set(4, EventCount.get(4) + updates.get("modify").entrySet().size());
         
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry)it.next();
@@ -840,20 +844,21 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
             
 
             for (Triples trp : (List <Triples>) pair.getValue()) {
-                updateFlowEntry(swName, trp.host1, trp.host2, trp.lnk, "modify");
+                EventCount.set(4, EventCount.get(4) + 1);
+                updateFlowEntryOF14(swName, trp.host1, trp.host2, trp.lnk, "modify");
             }
         }
 
         it = updates.get("delete").entrySet().iterator();
         logger.info("Flows Deleted: " + updates.get("delete").entrySet().size());
-        EventCount.set(5, EventCount.get(5) + updates.get("delete").entrySet().size());
 
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry)it.next();
             String swName = (String) pair.getKey();
             
             for (Triples trp : (List <Triples>) pair.getValue()) {
-                updateFlowEntry(swName, trp.host1, trp.host2, trp.lnk, "delete");
+                EventCount.set(5, EventCount.get(5) + 1);
+                updateFlowEntryOF14(swName, trp.host1, trp.host2, trp.lnk, "delete");
             }
         }
 
@@ -1029,9 +1034,10 @@ public class SCL implements IFloodlightModule, IOFSwitchListener {
                 try {
                 	synchronized (mutex) {
 	                    logger.info("GOING TO SLEEP ...");
-	                    Thread.sleep(60000);
+	                    Thread.sleep(10000);
 	                    logger.info("ADDING FLOWS ...");
 	                    updateFlowEntries(calShortestRoute());
+                        logger.info("DONE ADDING FLOWS ...");
 	                }	
 	                isStarted = true;
                 } catch (Exception e) {

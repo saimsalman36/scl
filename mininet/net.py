@@ -20,18 +20,20 @@ class SclNet(object):
         self.topo = topo
         # NOTE: hard code now, use config file instead
         self.ctrls = [1,13]
+        k = 6
         setLogLevel(LOG_LEVEL)
         # set up topology skeleton
         if self.topo == 'fattree_inband':
-            self.skeleton = FatTree(8, self.switches, self.hosts)
+            self.skeleton = FatTree(k, self.switches, self.hosts)
         elif self.topo == 'fattree_outband':
-            self.skeleton = FatTreeOutBand(8, self.switches, self.hosts, self.ctrls)
+            self.skeleton = FatTreeOutBand(k, self.switches, self.hosts, self.ctrls)
         # autoStaticArp doesnt works well, because we will move the IP in
         # the host interface to the internal port of the switch
         self.net = Mininet(topo=self.skeleton, controller=None, link=TCLink)
         # write topology to file
         self.file_name = os.path.abspath('../conf') + '/' + topo + '.json'
         topo2file(self.file_name, self.net, self.switches, self.hosts, self.ctrls)
+        self.net.getNodeByName("s000").cmdPrint("bash RunMe.sh Flows_NORMAL_RUNNING.txt " + str(int(k*k*1.25)) + " &")
         self.write_conf_to_file()
         if app == 'clean':
             return

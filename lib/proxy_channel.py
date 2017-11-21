@@ -959,9 +959,9 @@ class Scl2SclTcp(Scl2Scl):
 
         # periodically
         self.link_state_rqst()
-        self.flow_table_rqst()
-        self.flow_table_diff_check()
+        # self.flow_table_rqst()
+        # self.flow_table_diff_check()
         if self.fstats:
             self.flow_stats_rqst()
             self.te_routing_trigger()
-        self.gossip_syn()
+        # self.gossip_syn()
